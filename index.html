@@ -1356,6 +1356,7 @@ const QUESTIONS = [
 const letters = ['a', 'b', 'c', 'd'];
 let answered = {};
 let activeQuestions = []; // naključno izbrana vprašanja za ta test
+let shuffledOptions = {}; // premešan vrstni red odgovorov za vsako vprašanje { qid: [0,2,3,1] }
 
 // Naključno izbere "n" elementov iz seznama
 function pickRandom(arr, n) {
@@ -1363,17 +1364,28 @@ function pickRandom(arr, n) {
   return shuffled.slice(0, Math.min(n, arr.length));
 }
 
+// Vrne premešan seznam indeksov [0,1,2,3] → npr. [2,0,3,1]
+function shuffleIndices(n) {
+  return Array.from({length: n}, (_, i) => i).sort(() => Math.random() - 0.5);
+}
+
 function buildQuiz() {
   const form = document.getElementById('quiz-form');
   form.innerHTML = '';
   answered = {};
   activeQuestions = [];
+  shuffledOptions = {};
 
   // Za vsak sklop naključno izberi vprašanja
   SECTIONS.forEach((sec, si) => {
     const pool = QUESTIONS.filter(q => q.section === sec.id);
     const picked = pickRandom(pool, sec.pick);
     activeQuestions.push(...picked);
+  });
+
+  // Za vsako vprašanje premešaj vrstni red odgovorov
+  activeQuestions.forEach(q => {
+    shuffledOptions[q.id] = shuffleIndices(q.options.length);
   });
 
   updateProgress();
@@ -1402,10 +1414,12 @@ function buildQuiz() {
       card.className = 'question-card';
       card.id = `qcard-${q.id}`;
 
-      const optHTML = q.options.map((opt, oi) => `
-        <div class="option" id="opt-${q.id}-${oi}" onclick="selectOption(${q.id}, ${oi})">
-          <div class="option-letter">${letters[oi]}</div>
-          <div class="option-text">${opt}</div>
+      // Prikaži odgovore v premešanem vrstnem redu
+      const order = shuffledOptions[q.id]; // npr. [2, 0, 3, 1]
+      const optHTML = order.map((origIdx, displayPos) => `
+        <div class="option" id="opt-${q.id}-${origIdx}" onclick="selectOption(${q.id}, ${origIdx})">
+          <div class="option-letter">${letters[displayPos]}</div>
+          <div class="option-text">${q.options[origIdx]}</div>
         </div>
       `).join('');
 
@@ -1422,13 +1436,15 @@ function buildQuiz() {
   });
 }
 
-function selectOption(qid, oi) {
+function selectOption(qid, origIdx) {
   const q = activeQuestions.find(x => x.id === qid);
+  // Odznači vse možnosti (po originalnih indeksih)
   q.options.forEach((_, i) => {
-    document.getElementById(`opt-${qid}-${i}`).classList.remove('selected');
+    const el = document.getElementById(`opt-${qid}-${i}`);
+    if (el) el.classList.remove('selected');
   });
-  document.getElementById(`opt-${qid}-${oi}`).classList.add('selected');
-  answered[qid] = oi;
+  document.getElementById(`opt-${qid}-${origIdx}`).classList.add('selected');
+  answered[qid] = origIdx;
   document.getElementById(`qcard-${qid}`).classList.add('answered');
   updateProgress();
 }
@@ -1460,16 +1476,17 @@ function submitTest() {
 
   document.getElementById('warn-unanswered').style.display = 'none';
 
-  // Pokaži pravilne/napačne odgovore
+  // Pokaži pravilne/napačne odgovore (po originalnih indeksih)
   activeQuestions.forEach(q => {
     document.getElementById(`opts-${q.id}`).classList.add('locked');
     const userAns = answered[q.id];
-    q.options.forEach((_, oi) => {
-      const optEl = document.getElementById(`opt-${q.id}-${oi}`);
+    q.options.forEach((_, origIdx) => {
+      const optEl = document.getElementById(`opt-${q.id}-${origIdx}`);
+      if (!optEl) return;
       optEl.classList.remove('selected');
-      if (oi === q.correct) {
+      if (origIdx === q.correct) {
         optEl.classList.add(userAns === q.correct ? 'correct' : 'reveal-correct');
-      } else if (oi === userAns) {
+      } else if (origIdx === userAns) {
         optEl.classList.add('wrong');
       }
     });
