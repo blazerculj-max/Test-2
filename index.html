@@ -503,9 +503,162 @@
     .question-card { padding: 18px 16px; }
     .btn-submit { padding: 16px 40px; font-size: 15px; }
   }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 60% 40%, #1a2450 0%, #0a0d18 70%);
+    padding: 24px;
+  }
+
+  .login-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 52px 48px 44px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .login-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 28px;
+  }
+
+  .login-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .login-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 36px;
+    line-height: 1.5;
+  }
+
+  .login-field {
+    margin-bottom: 18px;
+  }
+
+  .login-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .login-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-size: 15px;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .login-input:focus {
+    border-color: var(--accent);
+  }
+
+  .login-input::placeholder { color: #3a4570; }
+
+  .login-error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.35);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 13.5px;
+    color: var(--red);
+    margin-bottom: 18px;
+    display: none;
+    text-align: center;
+  }
+
+  .btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Source Sans 3', sans-serif;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(79,142,247,0.3);
+    letter-spacing: 0.2px;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 28px rgba(79,142,247,0.45);
+  }
+
+  .btn-login:active { transform: translateY(0); }
+
+  #app-screen { display: none; }
 </style>
 </head>
 <body>
+
+<!-- ── LOGIN ZASLON ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">🛡️</div>
+    <div class="login-title">Preizkus znanja</div>
+    <div class="login-sub">Zavarovalni zastopnik · Licenčni test<br>Vpišite dostopne podatke za nadaljevanje.</div>
+
+    <div class="login-field">
+      <label class="login-label" for="inp-user">Uporabniško ime</label>
+      <input class="login-input" id="inp-user" type="text" placeholder="Vpišite uporabniško ime" autocomplete="username" />
+    </div>
+    <div class="login-field">
+      <label class="login-label" for="inp-pass">Geslo</label>
+      <input class="login-input" id="inp-pass" type="password" placeholder="Vpišite geslo" autocomplete="current-password" />
+    </div>
+
+    <div class="login-error" id="login-error">Napačno uporabniško ime ali geslo.</div>
+
+    <button class="btn-login" onclick="doLogin()">Vstopi v test →</button>
+  </div>
+</div>
+
+<!-- ── APLIKACIJA (skrita do prijave) ── -->
+<div id="app-screen">
 
 <div class="header">
   <div class="header-inner">
@@ -545,9 +698,38 @@
   </div>
 </div>
 
-</div>
+</div> <!-- konec #app-screen -->
 
 <script>
+// ============================================================
+//  PRIJAVA — tukaj nastavi uporabniško ime in geslo
+// ============================================================
+const LOGIN_USERNAME = "Test2026";
+const LOGIN_PASSWORD = "TRIS";
+
+function doLogin() {
+  const user = document.getElementById('inp-user').value.trim();
+  const pass = document.getElementById('inp-pass').value.trim();
+  const err  = document.getElementById('login-error');
+
+  if (user === LOGIN_USERNAME && pass === LOGIN_PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    buildQuiz();
+  } else {
+    err.style.display = 'block';
+    document.getElementById('inp-pass').value = '';
+    document.getElementById('inp-pass').focus();
+  }
+}
+
+// Enter tipka sproži prijavo
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+    doLogin();
+  }
+});
+
 // ============================================================
 //  SKLOPI — tukaj določiš ime sklopa in koliko vprašanj se
 //  naključno izbere na testu (pick).
@@ -616,13 +798,6 @@ const QUESTIONS = [
       "Slovensko zavarovalno združenje, Banka Slovenije in Združenje družb za upravljanje."
     ],
     correct: 2
-  },
-  {
-    id: 102,
-    section: "financno",
-    text: "Kateri izmed teh NI instrument denarnega trga?",
-    options: ["Zakladne menice.", "Delnice", "Blagajniški zapisi", "Komercialni zapisi"],
-    correct: 1
   },
   // ── SKLOP 2: ZAVAROVALNO-PRAVNE OSNOVE ── (section: "pravne")
   {
@@ -1345,8 +1520,6 @@ function retryTest() {
   buildQuiz();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
-buildQuiz();
 </script>
 </body>
 </html>
